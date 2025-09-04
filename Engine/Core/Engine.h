@@ -32,6 +32,8 @@ public:
 	UINT Width() const;
 	UINT Height() const;
 
+	virtual void OnGUI() {}
+
 protected:
 	static Engine* instance;
 

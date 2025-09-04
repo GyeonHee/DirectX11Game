@@ -234,7 +234,7 @@ void Renderer::OnRender()//(std::shared_ptr<Level> level)
 
     // 
     // 화면 전환. (EndScene/Present).
-    swapChain->Present(0u, 0u);
+    //swapChain->Present(0u, 0u);
 
     static ID3D11ShaderResourceView* nullSRV = nullptr;
     context->PSSetShaderResources(3, 1, &nullSRV);

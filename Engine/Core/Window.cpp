@@ -1,5 +1,6 @@
 #include "Window.h"
 
+
 Window::Window(
 	HINSTANCE instance,
 	WNDPROC messageProcedure,

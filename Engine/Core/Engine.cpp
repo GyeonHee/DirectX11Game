@@ -1,7 +1,9 @@
 #include "Engine.h"
 #include "Window.h"
 #include "Render/Renderer.h"
-
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
 Engine* Engine::instance = nullptr;
 
 LRESULT Engine::MessageProcedure(
@@ -10,6 +12,11 @@ LRESULT Engine::MessageProcedure(
     WPARAM wparam,
     LPARAM lparam)
 {
+    extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND
+        hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    if (ImGui_ImplWin32_WndProcHandler(window, message, wparam,
+        lparam))
+        return true;
     switch (message)
     {
     case WM_DESTROY:
@@ -41,11 +48,57 @@ Engine::Engine(HINSTANCE hInstance, const std::wstring& title, UINT width, UINT 
     window = std::make_shared<Window>(hInstance, MessageProcedure, title, width, height);
 
     renderer = std::make_shared<Renderer>(width, height, window->Handle());
+
+    // DirectX 디바이스가 유효한지 확인 후 ImGui 초기화
+    if (renderer->device && renderer->context)
+    {
+        MessageBoxA(nullptr, "Device and Context Valid", "Debug",
+            MB_OK);
+
+        IMGUI_CHECKVERSION();
+
+        ImGuiContext* ctx = ImGui::CreateContext();
+        if (ctx == nullptr)
+        {
+            MessageBoxA(nullptr, "ImGui CreateContext Failed!",
+                "Error", MB_OK);
+            return;
+        }
+
+        ImGuiIO& io = ImGui::GetIO();
+
+        bool win32_init = ImGui_ImplWin32_Init(window->Handle());
+        if (!win32_init)
+        {
+            MessageBoxA(nullptr, "ImGui Win32 Init Failed!", "Error",
+                MB_OK);
+            return;
+        }
+
+        bool dx11_init = ImGui_ImplDX11_Init(renderer->device,
+            renderer->context);
+        if (!dx11_init)
+        {
+            MessageBoxA(nullptr, "ImGui DX11 Init Failed!", "Error",
+                MB_OK);
+            return;
+        }
+
+        MessageBoxA(nullptr, "ImGui All Init Success", "Debug",
+            MB_OK);
+    }
+    else
+    {
+        MessageBoxA(nullptr, "Device or Context is NULL!", "Error",
+            MB_OK);
+    }
 }
 
 Engine::~Engine()
 {
-
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void Engine::Run()
@@ -105,8 +158,30 @@ void Engine::Run()
                     mainLevel->OnUpdate(deltaTime);
                     renderer->OnRender(mainLevel);
                 }*/
+                if (ImGui::GetCurrentContext())
+                {
+                    // 1. 3D 렌더링
+                    renderer->OnRender();
 
-                renderer->OnRender();
+                    // 2. ImGui 렌더링
+                    ImGui_ImplDX11_NewFrame();
+                    ImGui_ImplWin32_NewFrame();
+                    ImGui::NewFrame();
+
+                    if (ImGui::Begin("Engine Test Window"))
+                    {
+                        ImGui::SetWindowSize(ImVec2(300, 200));
+                        ImGui::Text("Direct from Engine!");
+                        ImGui::Button("Test Button");
+                        ImGui::End();
+                    }
+
+                    ImGui::Render();
+                    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+                    // 3. Present 호출
+                    renderer->Present();
+                }
 
                 previousTime = currentTime;
             }

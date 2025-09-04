@@ -23,6 +23,8 @@ public:
 
 	void WireframeOff();
 
+	void Present() { swapChain->Present(0u, 0u); }
+
 private:
 	void EmptyRTVsAndSRVs();
 

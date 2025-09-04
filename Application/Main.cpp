@@ -5,7 +5,7 @@
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
-#define WINDOW_NAME TEXT("DirectX_11")
+#define WINDOW_NAME TEXT("DX11_MyProject")
 
 
 //#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
