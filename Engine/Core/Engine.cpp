@@ -57,12 +57,23 @@ Engine::Engine(HINSTANCE hInstance, const std::wstring& title, UINT width, UINT 
 
         IMGUI_CHECKVERSION();
 
-        ImGuiContext* ctx = ImGui::CreateContext();
-        if (ctx == nullptr)
+        //ImGuiContext* ctx = ImGui::CreateContext();
+        imguiContext = ImGui::CreateContext();
+        if (imguiContext == nullptr)
         {
             MessageBoxA(nullptr, "ImGui CreateContext Failed!",
                 "Error", MB_OK);
             return;
+        }
+        ImGui::SetCurrentContext(imguiContext);
+        // 디버그 코드 추가
+        if (ImGui::GetCurrentContext() == imguiContext)
+        {
+            MessageBoxA(nullptr, "Context Set Successfully", "Debug", MB_OK);
+        }
+        else
+        {
+            MessageBoxA(nullptr, "Context Set Failed", "Debug", MB_OK);
         }
 
         ImGuiIO& io = ImGui::GetIO();
@@ -96,13 +107,28 @@ Engine::Engine(HINSTANCE hInstance, const std::wstring& title, UINT width, UINT 
 
 Engine::~Engine()
 {
-    ImGui_ImplDX11_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
+    if (imguiContext)
+    {
+        ImGui::SetCurrentContext(imguiContext);
+        ImGui_ImplDX11_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+        ImGui::DestroyContext(imguiContext);
+        imguiContext = nullptr;
+    }
+}
+
+Engine& Engine::Get()
+{
+    return *instance;
 }
 
 void Engine::Run()
 {
+    if (imguiContext)
+    {
+        ImGui::SetCurrentContext(imguiContext);
+    }
+
     LARGE_INTEGER currentTime = {};
     LARGE_INTEGER previousTime = currentTime;
     LARGE_INTEGER frequency = {};
@@ -158,6 +184,7 @@ void Engine::Run()
                     mainLevel->OnUpdate(deltaTime);
                     renderer->OnRender(mainLevel);
                 }*/
+
                 if (ImGui::GetCurrentContext())
                 {
                     // 1. 3D 렌더링
@@ -168,13 +195,7 @@ void Engine::Run()
                     ImGui_ImplWin32_NewFrame();
                     ImGui::NewFrame();
 
-                    if (ImGui::Begin("Engine Test Window"))
-                    {
-                        ImGui::SetWindowSize(ImVec2(300, 200));
-                        ImGui::Text("Direct from Engine!");
-                        ImGui::Button("Test Button");
-                        ImGui::End();
-                    }
+                    OnGUI();
 
                     ImGui::Render();
                     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

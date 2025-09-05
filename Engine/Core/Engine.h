@@ -1,5 +1,8 @@
 #pragma once
 #include "Core.h"
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
 #include <memory>
 #include <string>
 
@@ -29,6 +32,8 @@ public:
 	ID3D11DeviceContext& Context() const;
 	class Renderer& GetRenderer() const;
 
+	ImGuiContext* GetImGuiContext() const { return imguiContext; }
+
 	UINT Width() const;
 	UINT Height() const;
 
@@ -46,4 +51,6 @@ protected:
 	//std::unique_ptr<class Input> input;
 
 	//std::shared_ptr<class Level> mainLevel;
+	
+	ImGuiContext* imguiContext = nullptr;
 };
